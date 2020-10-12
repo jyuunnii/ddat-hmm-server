@@ -4,28 +4,12 @@ import { User } from "../entity/User";
 
 
 export class UserController {
-
-   public static listAll = async (req: Request, res: Response) => {
-      const userRepository = getRepository(User);
-      try {
-        const users = await userRepository
-          .createQueryBuilder('user')
-          .getMany();
-        res.send(users);
-      } catch (error) {
-        res.status(404).send();
-      }
-    };
-  
-
    public static newUser = async (req: Request, res: Response) => {
-
-      //const user: User = req.body;
-
+      const {name, email, password} = req.body;
       const createdUser = new User();
-      createdUser.name = "test";
-      createdUser.email = "test@";
-      createdUser.password = "test";
+      createdUser.name = name;
+      createdUser.email = email;
+      createdUser.password = password;
       createdUser.createdAt = new Date();
 
       const userRepository: Repository<User> = await getRepository(User);
@@ -37,8 +21,6 @@ export class UserController {
       }
       res.status(201).send('User created !\n');
    };
-  
-
 }
 
 export default UserController;
