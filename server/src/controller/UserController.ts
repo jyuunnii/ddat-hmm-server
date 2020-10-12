@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getRepository } from "typeorm";
+import { getRepository, Repository } from "typeorm";
 import { User } from "../entity/User";
 
 
@@ -19,22 +19,23 @@ export class UserController {
   
 
    public static newUser = async (req: Request, res: Response) => {
-      const user: User = req.body;
-      console.log("Inserting a new user into the database :");
+
+      //const user: User = req.body;
+
       const createdUser = new User();
-      createdUser.name = user.name;
-      createdUser.email = user.email;
-      createdUser.password = user.password;
+      createdUser.name = "test";
+      createdUser.email = "test@";
+      createdUser.password = "test";
       createdUser.createdAt = new Date();
 
-      const userRepository = getRepository(User);
+      const userRepository: Repository<User> = await getRepository(User);
       try {
         await userRepository.save(createdUser);
       } catch (e) {
-        res.status(409).send('Sorry, this username already exists');
+        res.status(409).send('Fail...\n');
         return;
       }
-      res.status(201).send('User created');
+      res.status(201).send('User created !\n');
    };
   
 
