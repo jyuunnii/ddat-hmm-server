@@ -17,13 +17,12 @@ export class UserController {
     }
   };
 
-  public static getUserByEmail = async (req: Request, res: Response) => {
-    const email = req.params.email;
-    const userRepository = getRepository(User);
+  public static getUserById = async (req: Request, res: Response) => {
+    const id = req.params.id;
     try {
-      const user = await userRepository
+      const user = await getRepository(User)
         .createQueryBuilder('user')
-        .where('user.email = :email', { email })
+        .where('user.id = :id', { id })
         .getOne();
 
       if(user){
@@ -38,20 +37,21 @@ export class UserController {
 
    public static newUser = async (req: Request, res: Response) => {
       const {name, email, password} = req.body;
-      const createdUser = new User();
-      createdUser.name = name;
-      createdUser.email = email;
-      createdUser.password = password;
-      createdUser.createdAt = new Date();
+      const user = new User();
+      user.name = name;
+      user.email = email;
+      user.password = password;
+      user.createdAt = new Date();
+      user.hashPassword();
 
       const userRepository: Repository<User> = await getRepository(User);
       try {
-        await userRepository.save(createdUser);
+        await userRepository.save(user);
       } catch (e) {
-        res.status(409).send('Fail...\n');
+        res.status(409).send(e);
         return;
       }
-      res.status(201).send('User created !\n');
+      res.status(201).send('User created!');
    };
 
    public static deleteUser = async (req: Request, res: Response) => {
@@ -65,7 +65,7 @@ export class UserController {
       return;
     }
     userRepository.delete(id);
-    res.status(200).send('User deleted !\n');
+    res.status(200).send('User deleted!');
   };
 }
 

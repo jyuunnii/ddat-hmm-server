@@ -1,12 +1,13 @@
 import { Router } from 'express'
-import { unwatchFile } from 'fs';
 import UserController from '../../controller/UserController'
 
 
 const user = Router();
 
-user.get('/:email', UserController.getUserByEmail);
-user.post('/signup', UserController.newUser);
+user.get('/', UserController.getAllUsers);
+user.get('/:id', UserController.getUserById);
+user.post('/', UserController.newUser);
+user.delete('/:id', UserController.deleteUser);
 
 
 export default user;

@@ -1,4 +1,5 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from "typeorm";
+import * as bcrypt from 'bcryptjs';
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Unique} from "typeorm";
 import { Image } from "./Image";
 
 @Entity()
@@ -26,6 +27,13 @@ export class User {
         (type) => Image,
         (image) => image.user,
       )
-      images!: Image[];
+    images!: Image[];
 
+    public hashPassword() {
+      this.password = bcrypt.hashSync(this.password, 8);
+    }
+
+    public checkIfUnencryptedPasswordIsValid(unencryptedPassword: string) {
+      return bcrypt.compareSync(unencryptedPassword, this.password);
+    }
 }
