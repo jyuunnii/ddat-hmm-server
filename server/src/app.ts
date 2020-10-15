@@ -4,7 +4,7 @@ import compression = require('compression');
 
 import routes from './routes';
 
-
+const config = require('./config');
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -18,6 +18,8 @@ app.use(morgan('dev'));
 app.use(compression());
 
 app.use('/', routes);
+
+app.set('jwt-secret', config.secret)
 
 
 export default app;

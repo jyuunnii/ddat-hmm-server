@@ -33,7 +33,7 @@ export class User {
       this.password = bcrypt.hashSync(this.password, 8);
     }
 
-    public checkIfUnencryptedPasswordIsValid(unencryptedPassword: string) {
+    public isPasswordCorrect(unencryptedPassword: string) {
       return bcrypt.compareSync(unencryptedPassword, this.password);
     }
   }
