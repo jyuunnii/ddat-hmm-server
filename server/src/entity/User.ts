@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcryptjs';
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Unique} from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Repository, getRepository} from "typeorm";
 import { Image } from "./Image";
 
 @Entity()
@@ -36,4 +36,4 @@ export class User {
     public checkIfUnencryptedPasswordIsValid(unencryptedPassword: string) {
       return bcrypt.compareSync(unencryptedPassword, this.password);
     }
-}
+  }

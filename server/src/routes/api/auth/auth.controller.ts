@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getRepository } from "typeorm";
-import { User } from "../entity/User";
+import { User } from "../../../entity/User";
+
 
 
 export class AuthController {
@@ -9,6 +10,7 @@ export class AuthController {
         if (!(email && password)) {
           res.status(400).send();
         }
+
         const userRepository = getRepository(User);
         let user: User;
         try {
@@ -25,7 +27,8 @@ export class AuthController {
           res.status(401).send();
           return;
         }
-
+        res.status(201).send();
+        console.log("login success");
         //TODO: 로그인 성공 후 token 이나 session key 발급
     };
   
