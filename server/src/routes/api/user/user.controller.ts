@@ -1,3 +1,4 @@
+import { validate } from "class-validator";
 import { Request, Response } from "express";
 import { getRepository, Repository } from "typeorm";
 import { User } from "../../../entity/User";
@@ -12,7 +13,7 @@ export class UserController {
         .getMany();
 
       res.send(users);
-    } catch (error) {
+    } catch (e) {
       res.status(404).send();
     }
   };
@@ -30,7 +31,7 @@ export class UserController {
       }else{
         res.status(404).send('User not found');
       }
-    } catch (error) {
+    } catch (e) {
       res.status(404).send('User not found');
     }
   };
@@ -42,8 +43,14 @@ export class UserController {
       user.email = email;
       user.password = password;
       user.createdAt = new Date();
-      user.hashPassword();
 
+      const duplicated = await validate(user);
+      if(duplicated.length > 0){
+        res.status(400).send(duplicated);
+        return;
+      }
+
+      user.hashPassword();
       const userRepository: Repository<User> = await getRepository(User);
       try {
         await userRepository.save(user);
@@ -56,11 +63,12 @@ export class UserController {
 
    public static deleteUser = async (req: Request, res: Response) => {
     const id = req.params.id;
+    console.log(id);
     const userRepository = getRepository(User);
     let user: User;
     try {
       user = await userRepository.findOneOrFail(id);
-    } catch (error) {
+    } catch (e) {
       res.status(404).send('User not found');
       return;
     }
