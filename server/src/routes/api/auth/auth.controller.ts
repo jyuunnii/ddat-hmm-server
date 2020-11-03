@@ -18,7 +18,7 @@ export class AuthController {
           user = await userRepository
             .createQueryBuilder('user')
             .addSelect('user.password')
-            .where('user.email = :email', { email })
+            .where('user.email = :email', { email }) //db에서 unique 하게 관리필요
             .getOne();
 
             if(user){
@@ -26,15 +26,18 @@ export class AuthController {
                 return res.status(401).send("Password error");
               }
 
-              const userInfo = {userId: user.id, userEmail: user.email};
+              const userInfo = {id: user.id};
               const options = {expiresIn: "1h", issuer: "hmm", subject: "userInfo"};            
               const token = await jwt.sign(userInfo, req.app.get('jwt-secret'), options);
-              res.status(200).json({token:token});
+              
+              res.status(200).json({
+                id: user.id,
+                token: token});
             }else{
               res.status(401).send("Account doesn't exist")
             }
         } catch (e) {
-            res.status(401).send(e)
+            res.status(409).send(e) //error status 변경 server internal error
         }
     };
 };

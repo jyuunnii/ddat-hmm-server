@@ -17,9 +17,5 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
         return;
     }
 
-    const {userId, userEmail} = jwtPayload;
-    const newToken = jwt.sign({userId, userEmail}, req.app.get('jwt-secret'),{expiresIn : '1h',});
-    res.setHeader('token', newToken)
-
     next()
 } 

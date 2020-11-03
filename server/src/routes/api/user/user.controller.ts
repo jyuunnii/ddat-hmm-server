@@ -1,4 +1,3 @@
-import { validate } from "class-validator";
 import { Request, Response } from "express";
 import { getRepository, Repository } from "typeorm";
 import { User } from "../../../entity/User";
@@ -10,7 +9,8 @@ export class UserController {
     try {
       const users = await userRepository
         .createQueryBuilder('user')
-        .getMany();
+        .getMany(); 
+        // 주요정보는 빼고 리턴하도록 수정
 
       res.send(users);
     } catch (e) {
@@ -25,9 +25,15 @@ export class UserController {
         .createQueryBuilder('user')
         .where('user.id = :id', { id })
         .getOne();
-
+       
       if(user){
-        res.send(user);
+        res.status(200).json({
+          id : user.id,
+          name : user.name,
+          profileImageUri : user.profileImageUri,
+          backgroundImageUri : user.backgroundImageUri,
+          comment: user.comment
+        });
       }else{
         res.status(404).send('User not found');
       }
@@ -36,19 +42,18 @@ export class UserController {
     }
   };
 
-   public static newUser = async (req: Request, res: Response) => {
+  public static newUser = async (req: Request, res: Response) => {
       const {name, email, password} = req.body;
       const user = new User();
       user.name = name;
       user.email = email;
       user.password = password;
-      user.createdAt = new Date();
 
-      const duplicated = await validate(user);
-      if(duplicated.length > 0){
-        res.status(400).send(duplicated);
-        return;
-      }
+      // const duplicated = await validate(user);
+      // if(duplicated.length > 0){
+      //   res.status(400).send(duplicated);
+      //   return;
+      // }            valideate 함수........검색
 
       user.hashPassword();
       const userRepository: Repository<User> = await getRepository(User);
@@ -61,9 +66,8 @@ export class UserController {
       res.status(201).send('User created!');
    };
 
-   public static deleteUser = async (req: Request, res: Response) => {
+  public static deleteUser = async (req: Request, res: Response) => {
     const id = req.params.id;
-    console.log(id);
     const userRepository = getRepository(User);
     let user: User;
     try {
