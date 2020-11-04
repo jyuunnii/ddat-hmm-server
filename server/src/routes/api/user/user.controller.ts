@@ -33,7 +33,7 @@ export class UserController {
           name : user.name,
           profileImageUri : user.profileImageUri,
           backgroundImageUri : user.backgroundImageUri,
-          comment: user.comment
+          comment: user.comment       
         });
       }else{
         res.status(404).send('User not found');

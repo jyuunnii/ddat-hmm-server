@@ -8,19 +8,47 @@ export class FollowController {
     const id = req.params.id;
     const userRepository: Repository<User> = await getRepository(User);
     try {
-        const user = await userRepository
+        const followed = await userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.friends', 'friend')
         .where('user.id = :id', { id })
-        .orWhere('friend.followerId = :id', { id })
         .distinct(true)
         .getMany()
-      
-      if(user){
-        res.status(200).send(user);
-      }else{
-        res.status(404).send('User not found');
-      }
+
+        const follower = await userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.friends', 'friend')
+        .where('friend.followerId = :id', { id })
+        .distinct(true)
+        .getMany()
+
+
+        let followerList = [];
+        let followedList = [];
+        Promise.all([
+          await followed.map(user => {
+            followedList.push({
+              id: user.id,
+              name: user.name,
+              profileImageUri: user.profileImageUri,
+              backgroundImageUri: user.backgroundImageUri,
+              friends: user.friends
+            })
+          }),
+          await follower.map(user => {
+            followerList.push({
+              id: user.id,
+              name: user.name,
+              profileImageUri: user.profileImageUri,
+              backgroundImageUri: user.backgroundImageUri,
+              friends: user.friends
+            })
+          })
+        ]);
+        res.status(200).json({
+          follower: followerList,
+          followed: followedList
+        });
     } catch (e) {
       res.status(404).send('User not found');
     }
@@ -37,10 +65,8 @@ export class FollowController {
         const friend = await friendRepository
         .createQueryBuilder('friend')
         .leftJoinAndSelect('friend.followed', 'user')
-        .andWhere(new Brackets(sub => {
-          sub.where('user.id = :id', {id: followed.id});
-          sub.orWhere('friend.followerId = :id', {id: followerId})
-        })).getOne();
+        .where('user.id = :id AND friend.followerId = :fid', {id: followed.id, fid: followerId})
+        .getOne();
 
         if(friend){
           res.send('Already followed');
