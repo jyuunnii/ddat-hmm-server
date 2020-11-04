@@ -5,7 +5,7 @@ import { User } from "../../../entity/User";
 
 export class UserController {
   public static getAllUsers = async (req: Request, res: Response) => {
-    const userRepository = getRepository(User);
+    const userRepository: Repository<User> = await getRepository(User);
     try {
       const users = await userRepository
         .createQueryBuilder('user')
@@ -20,8 +20,9 @@ export class UserController {
 
   public static getUserById = async (req: Request, res: Response) => {
     const id = req.params.id;
+    const userRepository: Repository<User> = await getRepository(User);
     try {
-      const user = await getRepository(User)
+      const user = await userRepository
         .createQueryBuilder('user')
         .where('user.id = :id', { id })
         .getOne();
@@ -41,6 +42,23 @@ export class UserController {
       res.status(404).send('User not found');
     }
   };
+
+  public static getUserNameById = async(req:Request, res:Response) => {
+    const {targetId} = req.body;
+    const userRepository: Repository<User> = await getRepository(User);
+    try{
+      const user = await userRepository
+      .createQueryBuilder('user')
+      .where('user.id = :id', {id: targetId})
+      .getOne();
+
+      if(user){
+        res.send(user.name);
+      }
+    }catch(e){
+      res.status(409).send(e);
+    }
+  }
 
   public static newUser = async (req: Request, res: Response) => {
       const {name, email, password} = req.body;
@@ -68,15 +86,15 @@ export class UserController {
 
   public static deleteUser = async (req: Request, res: Response) => {
     const id = req.params.id;
-    const userRepository = getRepository(User);
-    let user: User;
+    const userRepository: Repository<User> = await getRepository(User);
+
     try {
-      user = await userRepository.findOneOrFail(id);
+      const user = await userRepository.findOneOrFail(id);
     } catch (e) {
       res.status(404).send('User not found');
       return;
     }
-    userRepository.delete(id);
+    await userRepository.delete(id);
     res.status(200).send('User deleted!');
   };
 }
