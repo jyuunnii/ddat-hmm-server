@@ -28,6 +28,7 @@ export class FollowController {
             followerPublic.push({
               id: user.id,
               name: user.name,
+              comment: user.comment,
               profileImageUri: user.profileImageUri,
               backgroundImageUri: user.backgroundImageUri
             })
@@ -36,6 +37,7 @@ export class FollowController {
             followingPublic.push({
               id: user.id,
               name: user.name,
+              comment: user.comment,
               profileImageUri: user.profileImageUri,
               backgroundImageUri: user.backgroundImageUri
             })
@@ -49,9 +51,8 @@ export class FollowController {
       res.status(404).send('User not found');
     }
   }
-  
 
-  public static followByFollowerName = async(req: Request, res: Response) => {
+  public static followByName = async(req: Request, res: Response) => {
     const id = req.params.id;
     const {followingName} = req.body;
 
@@ -90,20 +91,20 @@ export class FollowController {
     }
   }
 
-  public static unfollowByFollowerName = async(req: Request, res: Response) => {
+  public static unfollowByName = async(req: Request, res: Response) => {
     const id = req.params.id;
-    const {followerName} = req.body;
+    const {followingName} = req.body;
     const friendRepository: Repository<Friend> = await getRepository(Friend);
     const userRepository: Repository<User> = await getRepository(User);
     try {
       const fid = await userRepository
       .createQueryBuilder('user')
-      .where('user.name = :name', {name: followerName})
+      .where('user.name = :name', {name: followingName})
       .getOne()
 
       const friend = await friendRepository
       .createQueryBuilder('friend')
-      .leftJoinAndSelect('friend.followed', 'user')
+      .leftJoinAndSelect('friend.user', 'user')
       .where('user.id = :id AND friend.followingId = :fid', {id: id, fid: fid.id})
       .getOne();
       

@@ -18,6 +18,21 @@ export class UserController {
     }
   };
 
+  public static getAllUsersByName = async(req: Request, res: Response) => {
+    const name = req.query.name;
+    const userRepository: Repository<User> = await getRepository(User);
+    try {
+      const users = await userRepository
+        .createQueryBuilder('user')
+        .where('user.name = :name', {name: name})
+        .getMany(); 
+
+      res.send(users);
+    } catch (e) {
+      res.status(404).send();
+    }
+  }
+
   public static getUserById = async (req: Request, res: Response) => {
     const id = req.params.id;
     const userRepository: Repository<User> = await getRepository(User);
@@ -88,8 +103,8 @@ export class UserController {
       let user = await userRepository.findOne(id);
       user.name = name;
       user.comment = comment;
-      
-      await userRepository.save(user);
+    
+      await userRepository.update(id, user);
       res.status(201).send('User data updated!')
     } catch (e) {
       res.status(404).send(e);
