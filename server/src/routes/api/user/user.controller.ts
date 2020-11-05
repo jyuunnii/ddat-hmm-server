@@ -87,16 +87,31 @@ export class UserController {
   public static deleteUser = async (req: Request, res: Response) => {
     const id = req.params.id;
     const userRepository: Repository<User> = await getRepository(User);
-
     try {
-      const user = await userRepository.findOneOrFail(id);
+      await userRepository.findOneOrFail(id);
     } catch (e) {
-      res.status(404).send('User not found');
-      return;
+      res.status(404).send(e);
     }
     await userRepository.delete(id);
     res.status(200).send('User deleted!');
   };
+
+  public static updateUser = async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const {name, comment} = req.body;
+
+    const userRepository: Repository<User> = await getRepository(User);
+    try {
+      let user = await userRepository.findOne(id);
+      user.name = name;
+      user.comment = comment;
+      
+      await userRepository.save(user);
+      res.status(201).send('User data updated!')
+    } catch (e) {
+      res.status(404).send(e);
+    }
+  }
 }
 
 export default UserController;

@@ -8,8 +8,8 @@ import { FollowController } from './follow.controller';
 const follow = Router();
 
 follow.get('/:id', [verifyToken, verifyUser], FollowController.getFriendsById);
-follow.post('/', FollowController.followByFollowerId);
-
+follow.post('/:id', [verifyToken, verifyUser],  FollowController.followByFollowerName);
+follow.delete('/:id', [verifyToken, verifyUser], FollowController.unfollowByFollowerName);
 
 
 export default follow;

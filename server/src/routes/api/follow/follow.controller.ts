@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Brackets, getRepository, Repository } from "typeorm";
+import { getRepository, Repository } from "typeorm";
 import { Friend } from "../../../entity/Friend";
 import { User } from "../../../entity/User";
 
@@ -7,47 +7,43 @@ export class FollowController {
   public static getFriendsById = async(req: Request, res: Response) => {
     const id = req.params.id;
     const userRepository: Repository<User> = await getRepository(User);
+    const friendRepository: Repository<Friend> = await getRepository(Friend);
     try {
-        const followed = await userRepository
+        const following = await userRepository
         .createQueryBuilder('user')
-        .leftJoinAndSelect('user.friends', 'friend')
-        .where('user.id = :id', { id })
-        .distinct(true)
-        .getMany()
+        .leftJoinAndSelect('user.following', 'friend')
+        .where('friend.followingId = :id',{id: id})
+        .getMany();
 
         const follower = await userRepository
         .createQueryBuilder('user')
-        .leftJoinAndSelect('user.friends', 'friend')
-        .where('friend.followerId = :id', { id })
-        .distinct(true)
+        .leftJoinAndSelect(Friend, 'friend', 'friend.followingId = user.id')
+        .where('friend.user.id = :id', {id: id})
         .getMany()
-
-
-        let followerList = [];
-        let followedList = [];
+  
+        let followerPublic = [];
+        let followingPublic = [];
         Promise.all([
-          await followed.map(user => {
-            followedList.push({
+          await follower.map(user => {
+            followerPublic.push({
               id: user.id,
               name: user.name,
               profileImageUri: user.profileImageUri,
-              backgroundImageUri: user.backgroundImageUri,
-              friends: user.friends
+              backgroundImageUri: user.backgroundImageUri
             })
           }),
-          await follower.map(user => {
-            followerList.push({
+          await following.map(user => {
+            followingPublic.push({
               id: user.id,
               name: user.name,
               profileImageUri: user.profileImageUri,
-              backgroundImageUri: user.backgroundImageUri,
-              friends: user.friends
+              backgroundImageUri: user.backgroundImageUri
             })
           })
         ]);
         res.status(200).json({
-          follower: followerList,
-          followed: followedList
+          following: followingPublic,
+          follower: followerPublic
         });
     } catch (e) {
       res.status(404).send('User not found');
@@ -55,28 +51,66 @@ export class FollowController {
   }
   
 
-  public static followByFollowerId = async(req: Request, res: Response) => {
-    const {followerId, followed} = req.body;
-    const new_friend = new Friend();
-    new_friend.followerId = followerId;
-    new_friend.followed = followed;
+  public static followByFollowerName = async(req: Request, res: Response) => {
+    const id = req.params.id;
+    const {followerName} = req.body;
+
+    const userRepository: Repository<User> = await getRepository(User);
     const friendRepository: Repository<Friend> = await getRepository(Friend);
     try {
-        const friend = await friendRepository
-        .createQueryBuilder('friend')
-        .leftJoinAndSelect('friend.followed', 'user')
-        .where('user.id = :id AND friend.followerId = :fid', {id: followed.id, fid: followerId})
+        const user = await userRepository
+        .createQueryBuilder('user')
+        .where('user.name = :name', {name: followerName})
         .getOne();
 
-        if(friend){
-          res.send('Already followed');
-          return;
-        }
+        const follower = await userRepository
+        .createQueryBuilder('user')
+        .where('user.id = :id', { id })
+        .getOne();
 
-        await friendRepository.save(new_friend);
+        // const friend = await friendRepository
+        // .createQueryBuilder('friend')
+        // .leftJoinAndSelect('friend.followed', 'user')
+        // .where('user.id = :id AND friend.followerId = :fid', {id: id, fid: follower.id})
+        // .getOne();
+
+        // if(friend){
+        //   res.send('Already followed');
+        //   return;
+        // }
+
+        const newFriend = new Friend();
+        newFriend.followingId = follower.id;
+        newFriend.user = user;
+        
+        await friendRepository.save(newFriend);
         res.status(201).send('New followed !');
     } catch (e) {
       res.status(409).send(e);
+    }
+  }
+
+  public static unfollowByFollowerName = async(req: Request, res: Response) => {
+    const id = req.params.id;
+    const {followerName} = req.body;
+    const friendRepository: Repository<Friend> = await getRepository(Friend);
+    const userRepository: Repository<User> = await getRepository(User);
+    try {
+      const fid = await userRepository
+      .createQueryBuilder('user')
+      .where('user.name = :name', {name: followerName})
+      .getOne()
+
+      const friend = await friendRepository
+      .createQueryBuilder('friend')
+      .leftJoinAndSelect('friend.followed', 'user')
+      .where('user.id = :id AND friend.followingId = :fid', {id: id, fid: fid.id})
+      .getOne();
+      
+      await friendRepository.delete(friend.id);
+      res.status(201).send('Unfollow')
+    } catch (e) {
+      res.status(404).send(e);
     }
   }
 }
