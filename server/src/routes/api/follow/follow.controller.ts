@@ -7,15 +7,15 @@ export class FollowController {
   public static getFriendsById = async(req: Request, res: Response) => {
     const id = req.params.id;
     const userRepository: Repository<User> = await getRepository(User);
-    const friendRepository: Repository<Friend> = await getRepository(Friend);
+  
     try {
-        const following = await userRepository
+        const follower = await userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.following', 'friend')
         .where('friend.followingId = :id',{id: id})
         .getMany();
 
-        const follower = await userRepository
+        const following= await userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect(Friend, 'friend', 'friend.followingId = user.id')
         .where('friend.user.id = :id', {id: id})
@@ -53,17 +53,17 @@ export class FollowController {
 
   public static followByFollowerName = async(req: Request, res: Response) => {
     const id = req.params.id;
-    const {followerName} = req.body;
+    const {followingName} = req.body;
 
     const userRepository: Repository<User> = await getRepository(User);
     const friendRepository: Repository<Friend> = await getRepository(Friend);
     try {
-        const user = await userRepository
+        const following = await userRepository
         .createQueryBuilder('user')
-        .where('user.name = :name', {name: followerName})
+        .where('user.name = :name', {name: followingName})
         .getOne();
 
-        const follower = await userRepository
+        const user = await userRepository
         .createQueryBuilder('user')
         .where('user.id = :id', { id })
         .getOne();
@@ -80,7 +80,7 @@ export class FollowController {
         // }
 
         const newFriend = new Friend();
-        newFriend.followingId = follower.id;
+        newFriend.followingId = following.id;
         newFriend.user = user;
         
         await friendRepository.save(newFriend);

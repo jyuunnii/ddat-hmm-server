@@ -43,23 +43,6 @@ export class UserController {
     }
   };
 
-  public static getUserNameById = async(req:Request, res:Response) => {
-    const {targetId} = req.body;
-    const userRepository: Repository<User> = await getRepository(User);
-    try{
-      const user = await userRepository
-      .createQueryBuilder('user')
-      .where('user.id = :id', {id: targetId})
-      .getOne();
-
-      if(user){
-        res.send(user.name);
-      }
-    }catch(e){
-      res.status(409).send(e);
-    }
-  }
-
   public static newUser = async (req: Request, res: Response) => {
       const {name, email, password} = req.body;
       const user = new User();

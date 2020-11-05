@@ -7,39 +7,53 @@ export class MessageController {
   public static getMessagesById = async (req: Request, res: Response) => {
     const id = req.params.id;
     const userRepository: Repository<User> = await getRepository(User);
+    const messageRepository: Repository<Message> = await getRepository(Message);
     try {
-        const sent = await userRepository
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.messages', 'message')
-        .where('user.id = :id', { id })
-        .getMany()
+        let sent = [];
+        let received = [];
 
-        const received = await userRepository
+        const subject = await userRepository
+        .createQueryBuilder('user')
+        .where('user.id = :id', {id: id})
+        .getOne();
+
+        
+        // Selet receiver_id in a sent message and select the receiver data in User table.
+        // Merge reciever data from User table and message data from Message table
+        const receivers = await userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect(Message, 'message', 'message.targetUserId = user.id')
+        .where('message.user.id = :id', {id: id})
+        .getMany();
+
+        await receivers.map(async receiver => {
+          const sentMessage = await messageRepository
+          .createQueryBuilder('message')
+          .where('message.targetUserId = :sid AND message.user.id = :uid', {sid: receiver.id, uid: id})
+          .getOne();
+
+          sent.push({
+            sender: subject.name,
+            receiver: receiver.name,
+            content : sentMessage.content,
+            count : sentMessage.count,
+            type : true,
+            date: sentMessage.createdAt
+          })
+        })
+        
+        // Received message is from subject user, so simply get both sender data and message data using subject_id(= req.parasm.id)
+        const receivedMessage = await userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.messages', 'message')
         .where('message.targetUserId = :id', { id })
-        .getMany()
+        .getMany();
 
-        const subjectName = sent[0].name;
-        let data  =[];
-        Promise.all([
-        await sent.map(record => {
+        await receivedMessage.map(record => {
           record.messages.map(message => {
-              data.push({
-              sender: subjectName,
-              receiver: message.targetUserId,
-              content : message.content,
-              count : message.count,
-              type : true,
-              date: message.createdAt
-            })
-          })
-        }),
-        await received.map(record => {
-          record.messages.map(message => {
-            data.push({
+            received.push({
               sender: record.name,
-              receiver: subjectName,
+              receiver: subject.name,
               content : message.content,
               count : message.count,
               type : false,
@@ -47,28 +61,31 @@ export class MessageController {
             })
           })
         })
-      ]);   
-      res.status(200).send(data)      
-    } catch (e) {
-      res.status(404).send(e);
-    }
+         
+        res.status(200).send({
+          sent: sent,
+          received: received
+        })      
+      } catch (e) {
+        res.status(404).send(e);
+      }
   }
 
   public static sendMessage = async(req: Request, res: Response) => {
       const {user, targetUserId, content, count} = req.body;
-      const sent_message = new Message();
-      sent_message.user = user;
-      sent_message.targetUserId = targetUserId;
-      sent_message.content = content;
-      sent_message.count = count;
+      const newMessage = new Message();
+      newMessage.user = user;
+      newMessage.targetUserId = targetUserId;
+      newMessage.content = content;
+      newMessage.count = count;
   
       const messageRepository: Repository<Message> = await getRepository(Message);
       try {
-        await messageRepository.save(sent_message);
+        await messageRepository.save(newMessage);
       } catch (e) {
         res.status(409).send(e);
         return;
       }
-      res.status(201).send('Message posted!');
+      res.status(201).send('Message sent!');
   }
 }

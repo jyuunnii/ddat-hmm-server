@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, OneToOne, Table, JoinColumn} from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from "typeorm";
 import { Friend } from './Friend';
 import { Message } from './Message';
 
@@ -9,6 +9,10 @@ export class User {
     @OneToMany(
       (type) => Friend,
       (friend) => friend.followingId
+    )
+    @OneToMany(
+      (type) => Message,
+      (message) => message.targetUserId
     )
     id: number;
 
