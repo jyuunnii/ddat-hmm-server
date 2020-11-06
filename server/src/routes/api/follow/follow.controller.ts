@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getRepository, Repository } from "typeorm";
+import { Brackets, getRepository, Repository } from "typeorm";
 import { Friend } from "../../../entity/Friend";
 import { User } from "../../../entity/User";
 
