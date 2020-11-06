@@ -8,8 +8,10 @@ import UserController from './user.controller';
 const user = Router();
 
 user.get('/', UserController.getAllUsers);
+user.get('/name?:name', UserController.getAllUsersByName);
 user.get('/:id', [verifyToken, verifyUser], UserController.getUserById);
 user.post('/', UserController.newUser);
+user.post('/:id', [verifyToken, verifyUser], UserController.updateUser);
 user.delete('/:id', [verifyToken, verifyUser], UserController.deleteUser);
 
 

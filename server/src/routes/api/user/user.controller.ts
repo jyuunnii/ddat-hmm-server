@@ -5,7 +5,7 @@ import { User } from "../../../entity/User";
 
 export class UserController {
   public static getAllUsers = async (req: Request, res: Response) => {
-    const userRepository = getRepository(User);
+    const userRepository: Repository<User> = await getRepository(User);
     try {
       const users = await userRepository
         .createQueryBuilder('user')
@@ -18,10 +18,26 @@ export class UserController {
     }
   };
 
+  public static getAllUsersByName = async(req: Request, res: Response) => {
+    const name = req.query.name;
+    const userRepository: Repository<User> = await getRepository(User);
+    try {
+      const users = await userRepository
+        .createQueryBuilder('user')
+        .where('user.name = :name', {name: name})
+        .getMany(); 
+
+      res.send(users);
+    } catch (e) {
+      res.status(404).send();
+    }
+  }
+
   public static getUserById = async (req: Request, res: Response) => {
     const id = req.params.id;
+    const userRepository: Repository<User> = await getRepository(User);
     try {
-      const user = await getRepository(User)
+      const user = await userRepository
         .createQueryBuilder('user')
         .where('user.id = :id', { id })
         .getOne();
@@ -32,7 +48,7 @@ export class UserController {
           name : user.name,
           profileImageUri : user.profileImageUri,
           backgroundImageUri : user.backgroundImageUri,
-          comment: user.comment
+          comment: user.comment       
         });
       }else{
         res.status(404).send('User not found');
@@ -41,6 +57,23 @@ export class UserController {
       res.status(404).send('User not found');
     }
   };
+
+  public static getUserNameById = async(req:Request, res:Response) => {
+    const {targetId} = req.body;
+    const userRepository: Repository<User> = await getRepository(User);
+    try{
+      const user = await userRepository
+      .createQueryBuilder('user')
+      .where('user.id = :id', {id: targetId})
+      .getOne();
+
+      if(user){
+        res.send(user.name);
+      }
+    }catch(e){
+      res.status(409).send(e);
+    }
+  }
 
   public static newUser = async (req: Request, res: Response) => {
       const {name, email, password} = req.body;
@@ -68,17 +101,32 @@ export class UserController {
 
   public static deleteUser = async (req: Request, res: Response) => {
     const id = req.params.id;
-    const userRepository = getRepository(User);
-    let user: User;
+    const userRepository: Repository<User> = await getRepository(User);
     try {
-      user = await userRepository.findOneOrFail(id);
+      await userRepository.findOneOrFail(id);
     } catch (e) {
-      res.status(404).send('User not found');
-      return;
+      res.status(404).send(e);
     }
-    userRepository.delete(id);
+    await userRepository.delete(id);
     res.status(200).send('User deleted!');
   };
+
+  public static updateUser = async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const {name, comment} = req.body;
+
+    const userRepository: Repository<User> = await getRepository(User);
+    try {
+      let user = await userRepository.findOne(id);
+      user.name = name;
+      user.comment = comment;
+    
+      await userRepository.update(id, user);
+      res.status(201).send('User data updated!')
+    } catch (e) {
+      res.status(404).send(e);
+    }
+  }
 }
 
 export default UserController;

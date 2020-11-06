@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./User";
 
 @Entity()
@@ -12,7 +12,10 @@ export class Message {
     @Column()
     count: number;
 
-    @Column()
+    @ManyToOne(
+        (type) => User,
+        (user) => user.id
+    )
     targetUserId: number;
 
     @ManyToOne(

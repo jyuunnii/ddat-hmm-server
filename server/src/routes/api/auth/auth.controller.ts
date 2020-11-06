@@ -1,5 +1,5 @@
 import { Request, RequestHandler, Response } from "express";
-import { getRepository } from "typeorm";
+import { getRepository, Repository } from "typeorm";
 import { User } from "../../../entity/User";
 import jwt = require("jsonwebtoken");
 
@@ -12,10 +12,10 @@ export class AuthController {
           res.status(400).send("Invalid email or invalid passwords");
         }
 
-        const userRepository = getRepository(User);
+        const userRepository: Repository<User> = await getRepository(User);
         let user: User;
         try {
-          user = await userRepository
+          const user = await userRepository
             .createQueryBuilder('user')
             .addSelect('user.password')
             .where('user.email = :email', { email }) //db에서 unique 하게 관리필요

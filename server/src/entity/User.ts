@@ -1,21 +1,28 @@
 import * as bcrypt from 'bcrypt';
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, OneToOne} from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from "typeorm";
 import { Friend } from './Friend';
 import { Message } from './Message';
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
+    @OneToMany(
+      (type) => Friend,
+      (friend) => friend.followingId
+    )
+    @OneToMany(
+      (type) => Message,
+      (message) => message.targetUserId
+    )
     id: number;
 
     @Column({default: null})
     name: string;
 
-    @Column()
-    //unique
+    @Column({unique: true})
     email: string;
 
-    @Column()
+    @Column({select: false})
     password: string;
 
     @Column({default: null})
@@ -29,9 +36,9 @@ export class User {
 
     @OneToMany(
       (type) => Friend,
-      (friend) => friend.followed
+      (friend) => friend.user
     )
-    friends: Friend[];
+    following: Friend[];
 
     @OneToMany(
       (type) => Message,
