@@ -22,9 +22,13 @@ export class UserController {
     const name = req.query.name;
     const userRepository: Repository<User> = await getRepository(User);
     try {
+      if(name === ""){
+        res.send([]);
+        return;
+      }
       const users = await userRepository
         .createQueryBuilder('user')
-        .where('user.name = :name', {name: name})
+        .where('user.name like :name', {name: `%${name}%`})
         .getMany(); 
 
       res.send(users);
@@ -76,11 +80,13 @@ export class UserController {
   }
 
   public static newUser = async (req: Request, res: Response) => {
-      const {name, email, password} = req.body;
+      const {name, email, password, profileImageUri, comment} = req.body;
       const user = new User();
       user.name = name;
       user.email = email;
       user.password = password;
+      user.profileImageUri = profileImageUri;
+      user.comment = comment;
 
       // const duplicated = await validate(user);
       // if(duplicated.length > 0){
@@ -120,9 +126,10 @@ export class UserController {
       let user = await userRepository.findOne(id);
       user.name = name;
       user.comment = comment;
-    
+      user.updatedAt = new Date();
+      
       await userRepository.update(id, user);
-      res.status(201).send('User data updated!')
+      res.status(201).send('User data modified!')
     } catch (e) {
       res.status(404).send(e);
     }

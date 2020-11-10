@@ -8,6 +8,10 @@ export class MessageController {
     const id = req.params.id;
     const userRepository: Repository<User> = await getRepository(User);
     const messageRepository: Repository<Message> = await getRepository(Message);
+
+    const currentDate = new Date();
+    const today = currentDate.getFullYear() + "-" + (currentDate.getMonth()+1) + "-" + currentDate.getDate();
+
     try {
         let sent = [];
         let received = [];
@@ -27,26 +31,26 @@ export class MessageController {
         .getMany();
 
         await receivers.map(async receiver => {
-          const sentMessage = await messageRepository
+          const sentMessages = await messageRepository
           .createQueryBuilder('message')
-          .where('message.targetUserId = :sid AND message.user.id = :uid', {sid: receiver.id, uid: id})
-          .getOne();
-
-          sent.push({
-            sender: subject.name,
-            receiver: receiver.name,
-            content : sentMessage.content,
-            count : sentMessage.count,
-            type : true,
-            date: sentMessage.createdAt
-          })
+          .where('message.targetUserId = :sid AND message.user.id = :uid AND message.createdAt =:date', {sid: receiver.id, uid: id, date: today})
+          .getMany();
+          
+          sentMessages.map(sentMessage => {
+            sent.push({
+              sender: subject.name,
+              receiver: receiver.name,
+              content : sentMessage.content,
+              type : true,
+            })
+          }) 
         })
         
         // Received message is from subject user, so simply get both sender data and message data using subject_id(= req.parasm.id)
         const receivedMessage = await userRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.messages', 'message')
-        .where('message.targetUserId = :id', { id })
+        .where('message.targetUserId = :id AND message.createdAt =:date', { id: id, date: today })
         .getMany();
 
         await receivedMessage.map(record => {
@@ -55,9 +59,7 @@ export class MessageController {
               sender: record.name,
               receiver: subject.name,
               content : message.content,
-              count : message.count,
               type : false,
-              date: message.createdAt
             })
           })
         })
@@ -72,17 +74,24 @@ export class MessageController {
   }
 
   public static sendMessage = async(req: Request, res: Response) => {
-      const {user, targetUserId, content, count} = req.body;
-      const newMessage = new Message();
-      newMessage.user = user;
-      newMessage.targetUserId = targetUserId;
-      newMessage.content = content;
-      newMessage.count = count;
-  
-      const messageRepository: Repository<Message> = await getRepository(Message);
-      try {
+    const id = req.params.id;
+    const {targetUserId, content} = req.body;
+
+    const userRepository: Repository<User> = await getRepository(User); 
+    const messageRepository: Repository<Message> = await getRepository(Message);
+    try {
+        const user = await userRepository
+        .createQueryBuilder('user')
+        .where('user.id = :id', {id: id})
+        .getOne();
+
+        const newMessage = new Message();
+        newMessage.user = user;
+        newMessage.targetUserId = targetUserId;
+        newMessage.content = content;
+
         await messageRepository.save(newMessage);
-      } catch (e) {
+    } catch (e) {
         res.status(409).send(e);
         return;
       }

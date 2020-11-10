@@ -9,9 +9,6 @@ export class Message {
     @Column()
     content: string;
 
-    @Column()
-    count: number;
-
     @ManyToOne(
         (type) => User,
         (user) => user.id
@@ -25,6 +22,6 @@ export class Message {
     )
     user: User;
 
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn({ name: 'created_at', type: 'date'})
     createdAt!: Date;
 }
