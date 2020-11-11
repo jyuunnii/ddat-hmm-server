@@ -1,28 +1,62 @@
+import * as bcrypt from 'bcrypt';
 import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from "typeorm";
-import { Image } from "./Image";
+import { Friend } from './Friend';
+import { Message } from './Message';
 
 @Entity()
 export class User {
-
     @PrimaryGeneratedColumn()
+    @OneToMany(
+      (type) => Friend,
+      (friend) => friend.followingId
+    )
+    @OneToMany(
+      (type) => Message,
+      (message) => message.targetUserId
+    )
     id: number;
 
-    @Column()
+    @Column({default: null})
     name: string;
 
-    @Column({ type: 'boolean' })
-    isActive!: boolean;
+    @Column({unique: true})
+    email: string;
 
-    @CreateDateColumn({ name: 'created_at' })
-    createdAt!: Date;
+    @Column({select: false})
+    password: string;
 
-    @UpdateDateColumn({ name: 'updated_at' })
-    updatedAt!: Date;
+    @Column({default: null})
+    profileImageUri: string;
+
+    @Column({default: null})
+    backgroundImageUri: string;
+
+    @Column({default: null})
+    comment: string;
 
     @OneToMany(
-        (type) => Image,
-        (image) => image.user,
-      )
-      images!: Image[];
+      (type) => Friend,
+      (friend) => friend.user
+    )
+    following: Friend[];
 
-}
+    @OneToMany(
+      (type) => Message,
+      (msg) => msg.user
+    )
+    messages: Message[];
+
+    @CreateDateColumn({ name: 'created_at', type: "timestamp" })
+    createdAt!: Date;
+
+    @UpdateDateColumn({ name: 'updated_at', type: "timestamp" })
+    updatedAt!: Date;
+
+    public hashPassword() {
+      this.password = bcrypt.hashSync(this.password, 8);
+    }
+
+    public isPasswordCorrect(unencryptedPassword: string) {
+      return bcrypt.compareSync(unencryptedPassword, this.password);
+    }
+  }
