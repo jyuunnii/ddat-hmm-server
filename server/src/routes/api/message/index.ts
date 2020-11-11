@@ -6,7 +6,7 @@ import { MessageController } from './message.controller';
 const message = Router();
 
 message.get('/:id', [verifyToken, verifyUser], MessageController.getMessagesById);
-message.post('/', MessageController.sendMessage);
+message.post('/:id', [verifyToken, verifyUser], MessageController.sendMessage);
 
 
 

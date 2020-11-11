@@ -46,10 +46,10 @@ export class User {
     )
     messages: Message[];
 
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn({ name: 'created_at', type: "timestamp" })
     createdAt!: Date;
 
-    @UpdateDateColumn({  default: null, name: 'updated_at' })
+    @UpdateDateColumn({ name: 'updated_at', type: "timestamp" })
     updatedAt!: Date;
 
     public hashPassword() {
