@@ -22,7 +22,7 @@ This is REST API server for ddat-hmm project.
 * [`Node.js`](https://nodejs.org/)
 * [`TypeORM`](https://typeorm.io/#/)
 * [`Postgres`](https://www.postgresql.org/)
-* [`brcypt`](https://github.com/kelektiv/node.bcrypt.js)
+* [`bcrypt`](https://github.com/kelektiv/node.bcrypt.js)
 
 ### Features
 - Save ddat-hmm data of user, friend(following / follower), and message(sent / received)
